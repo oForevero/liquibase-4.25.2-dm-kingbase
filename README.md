@@ -2,7 +2,7 @@
 <p align="center"><img src="https://github.com/liquibase/liquibase/blob/master/Liquibase.png" width="30%" height="30%"></p>
 
 ## 修改支持国产化个人自用项目
-最近公司想要使用liquibase项目，故进行研究实现该功能，目前仅对国产化数据库进行适配开发工作。
+最近工作需要使用liquibase项目，故进行研究实现该功能，目前仅对国产化数据库进行适配开发工作。
 ### 使用版本
 拉取官方4.25.1版本，直接fork会导致官方存在一大堆workflow到本项目，故自己上传
 https://github.com/liquibase/liquibase/tree/v4.25.1
