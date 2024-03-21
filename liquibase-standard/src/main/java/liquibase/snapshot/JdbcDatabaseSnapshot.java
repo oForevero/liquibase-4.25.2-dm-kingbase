@@ -284,7 +284,7 @@ public class JdbcDatabaseSnapshot extends DatabaseSnapshot {
                     c.forEach(row -> {
                         row.set("FILTER_CONDITION", null);
                         String key = row.getString("INDEX_OWNER") + "::" + row.getString("INDEX_NAME") + "::" +
-                                     row.getInt("ORDINAL_POSITION");
+                                row.getInt("ORDINAL_POSITION");
                         CachedRow fromMap = expressionMap.get(key);
                         if (fromMap != null) {
                             row.set("FILTER_CONDITION", fromMap.get("COLUMN_EXPRESSION"));
@@ -372,6 +372,9 @@ public class JdbcDatabaseSnapshot extends DatabaseSnapshot {
             return getResultSetCache("getNotNullConst").get(getNotNullConstraintsResultSetCache);
         }
 
+        /**
+         * 增加达梦适配
+         */
         private class GetColumnResultSetCache extends ResultSetCache.SingleResultSetExtractor {
             final String catalogName;
             final String schemaName;
@@ -416,7 +419,9 @@ public class JdbcDatabaseSnapshot extends DatabaseSnapshot {
 
             @Override
             public List<CachedRow> fastFetchQuery() throws SQLException, DatabaseException {
-                if (database instanceof OracleDatabase) {
+                if (database instanceof DmDatabase) {
+                    return this.damengQuery(false);
+                } else if (database instanceof OracleDatabase) {
                     return oracleQuery(false);
                 } else if (database instanceof MSSQLDatabase) {
                     return mssqlQuery(false);
@@ -425,13 +430,13 @@ public class JdbcDatabaseSnapshot extends DatabaseSnapshot {
 
                 try {
                     List<CachedRow> returnList =
-                       extract(
-                            databaseMetaData.getColumns(
-                                    ((AbstractJdbcDatabase) database).getJdbcCatalogName(catalogAndSchema),
-                                    escapeForLike(((AbstractJdbcDatabase) database).getJdbcSchemaName(catalogAndSchema), database),
-                                    escapeForLike(tableName, database),
-                                    SQL_FILTER_MATCH_ALL)
-                    );
+                            extract(
+                                    databaseMetaData.getColumns(
+                                            ((AbstractJdbcDatabase) database).getJdbcCatalogName(catalogAndSchema),
+                                            escapeForLike(((AbstractJdbcDatabase) database).getJdbcSchemaName(catalogAndSchema), database),
+                                            escapeForLike(tableName, database),
+                                            SQL_FILTER_MATCH_ALL)
+                            );
                     //
                     // IF MARIADB OR SQL ANYWHERE
                     // Query to get actual data types and then map each column to its CachedRow
@@ -449,7 +454,9 @@ public class JdbcDatabaseSnapshot extends DatabaseSnapshot {
 
             @Override
             public List<CachedRow> bulkFetchQuery() throws SQLException, DatabaseException {
-                if (database instanceof OracleDatabase) {
+                if (database instanceof DmDatabase) {
+                    return this.damengQuery(true);
+                } else if (database instanceof OracleDatabase) {
                     return oracleQuery(true);
                 } else if (database instanceof MSSQLDatabase) {
                     return mssqlQuery(true);
@@ -459,10 +466,10 @@ public class JdbcDatabaseSnapshot extends DatabaseSnapshot {
 
                 try {
                     List<CachedRow> returnList =
-                        extract(databaseMetaData.getColumns(((AbstractJdbcDatabase) database)
-                                    .getJdbcCatalogName(catalogAndSchema),
-                            escapeForLike(((AbstractJdbcDatabase) database).getJdbcSchemaName(catalogAndSchema), database),
-                            SQL_FILTER_MATCH_ALL, SQL_FILTER_MATCH_ALL));
+                            extract(databaseMetaData.getColumns(((AbstractJdbcDatabase) database)
+                                            .getJdbcCatalogName(catalogAndSchema),
+                                    escapeForLike(((AbstractJdbcDatabase) database).getJdbcSchemaName(catalogAndSchema), database),
+                                    SQL_FILTER_MATCH_ALL, SQL_FILTER_MATCH_ALL));
                     //
                     // IF MARIADB OR SQL ANYWHERE
                     // Query to get actual data types and then map each column to its CachedRow
@@ -505,8 +512,8 @@ public class JdbcDatabaseSnapshot extends DatabaseSnapshot {
                     // See https://help.sap.com/docs/SAP_SQL_Anywhere/93079d4ba8e44920ae63ffb4def91f5b/3beaa3956c5f1014883cb0c3e3559cc9.html.
                     //
                     String selectStatement =
-                        "SELECT table_name, column_name, scale, column_type FROM SYSTABCOL KEY JOIN SYSTAB KEY JOIN SYSUSER " +
-                        "WHERE user_name = ? AND ? IS NULL OR table_name = ?";
+                            "SELECT table_name, column_name, scale, column_type FROM SYSTABCOL KEY JOIN SYSTAB KEY JOIN SYSUSER " +
+                                    "WHERE user_name = ? AND ? IS NULL OR table_name = ?";
                     Connection underlyingConnection = ((JdbcConnection) database.getConnection()).getUnderlyingConnection();
                     try (PreparedStatement stmt = underlyingConnection.prepareStatement(selectStatement)) {
                         stmt.setString(1, schemaName);
@@ -522,7 +529,7 @@ public class JdbcDatabaseSnapshot extends DatabaseSnapshot {
                                     String rowTableName = row.getString("TABLE_NAME");
                                     String rowColumnName = row.getString("COLUMN_NAME");
                                     if (rowTableName.equalsIgnoreCase(selectedTableName) &&
-                                        rowColumnName.equalsIgnoreCase(selectedColumnName)) {
+                                            rowColumnName.equalsIgnoreCase(selectedColumnName)) {
                                         int rowDataType = row.getInt("DATA_TYPE");
                                         if (rowDataType == Types.VARCHAR || rowDataType == Types.CHAR) {
                                             row.set("scale", selectedScale);
@@ -548,7 +555,7 @@ public class JdbcDatabaseSnapshot extends DatabaseSnapshot {
                 // to capture DATETIME(<precision>) data types.
                 //
                 StringBuilder selectStatement = new StringBuilder(
-                    "SELECT TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ?");
+                        "SELECT TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ?");
                 if(tableName != null) {
                     selectStatement.append(" AND TABLE_NAME = ?");
                 }
@@ -575,10 +582,10 @@ public class JdbcDatabaseSnapshot extends DatabaseSnapshot {
                             String rowTypeName = row.getString("TYPE_NAME");
                             int rowDataType = row.getInt("DATA_TYPE");
                             if (rowTableName.equalsIgnoreCase(selectedTableName) &&
-                                rowColumnName.equalsIgnoreCase(selectedColumnName) &&
-                                rowTypeName.equalsIgnoreCase("datetime") &&
-                                rowDataType == Types.OTHER &&
-                                !rowTypeName.equalsIgnoreCase(actualDataType)) {
+                                    rowColumnName.equalsIgnoreCase(selectedColumnName) &&
+                                    rowTypeName.equalsIgnoreCase("datetime") &&
+                                    rowDataType == Types.OTHER &&
+                                    !rowTypeName.equalsIgnoreCase(actualDataType)) {
                                 row.set("TYPE_NAME", actualDataType);
                                 row.set("DATA_TYPE", Types.TIMESTAMP);
                                 break;
@@ -643,6 +650,41 @@ public class JdbcDatabaseSnapshot extends DatabaseSnapshot {
                 return this.executeAndExtract(sql, database);
             }
 
+            protected List<CachedRow> damengQuery(boolean bulk) throws DatabaseException, SQLException {
+                CatalogAndSchema catalogAndSchema = (new CatalogAndSchema(this.catalogName, this.schemaName)).customize(CachingDatabaseMetaData.this.database);
+                boolean getMapDateToTimestamp = true;
+                String jdbcSchemaName = ((AbstractJdbcDatabase)CachingDatabaseMetaData.this.database).getJdbcSchemaName(catalogAndSchema);
+                boolean collectIdentityData = CachingDatabaseMetaData.this.database.getDatabaseMajorVersion() >= 12;
+                String sql = "select NULL AS TABLE_CAT, OWNER AS TABLE_SCHEM, 'NO' as IS_AUTOINCREMENT, cc.COMMENTS AS REMARKS,OWNER, TABLE_NAME, COLUMN_NAME, DATA_TYPE AS DATA_TYPE_NAME, DATA_TYPE_MOD, DATA_TYPE_OWNER, DECODE (c.data_type, 'CHAR', 1, 'VARCHAR2', 12, 'NUMBER', 3, 'LONG', -1, 'DATE', " + (getMapDateToTimestamp ? "93" : "91") + ", 'RAW', -3, 'LONG RAW', -4, 'BLOB', 2004, 'CLOB', 2005, 'BFILE', -13, 'FLOAT', 6, 'TIMESTAMP(6)', 93, 'TIMESTAMP(6) WITH TIME ZONE', -101, 'TIMESTAMP(6) WITH LOCAL TIME ZONE', -102, 'INTERVAL YEAR(2) TO MONTH', -103, 'INTERVAL DAY(2) TO SECOND(6)', -104, 'BINARY_FLOAT', 100, 'BINARY_DOUBLE', 101, 'XMLTYPE', 2009, 1111) AS data_type, DECODE( CHAR_USED, 'C',CHAR_LENGTH, DATA_LENGTH ) as DATA_LENGTH, DATA_PRECISION, DATA_SCALE, NULLABLE, COLUMN_ID as ORDINAL_POSITION, DEFAULT_LENGTH, DATA_DEFAULT, NUM_BUCKETS, CHARACTER_SET_NAME, CHAR_COL_DECL_LENGTH, CHAR_LENGTH, CHAR_USED, VIRTUAL_COLUMN ";
+                if (collectIdentityData) {
+                    sql = sql + ", DEFAULT_ON_NULL, IDENTITY_COLUMN, ic.GENERATION_TYPE ";
+                }
+
+                sql = sql + "FROM ALL_TAB_COLS c JOIN ALL_COL_COMMENTS cc USING ( OWNER, TABLE_NAME, COLUMN_NAME ) ";
+                if (collectIdentityData) {
+                    sql = sql + "LEFT JOIN ALL_TAB_IDENTITY_COLS ic USING (OWNER, TABLE_NAME, COLUMN_NAME ) ";
+                }
+
+                if (bulk && JdbcDatabaseSnapshot.this.getAllCatalogsStringScratchData() != null) {
+                    sql = sql + "WHERE OWNER IN ('" + jdbcSchemaName + "', " + JdbcDatabaseSnapshot.this.getAllCatalogsStringScratchData() + ")";
+                } else {
+                    sql = sql + "WHERE OWNER='" + jdbcSchemaName + "'";
+                }
+
+                if (!bulk) {
+                    if (this.tableName != null) {
+                        sql = sql + " AND TABLE_NAME='" + CachingDatabaseMetaData.this.database.escapeStringForDatabase(this.tableName) + "'";
+                    }
+
+                    if (this.columnName != null) {
+                        sql = sql + " AND COLUMN_NAME='" + CachingDatabaseMetaData.this.database.escapeStringForDatabase(this.columnName) + "'";
+                    }
+                }
+
+                sql = sql + " AND " + ((OracleDatabase)CachingDatabaseMetaData.this.database).getSystemTableWhereClause("TABLE_NAME");
+                sql = sql + " ORDER BY OWNER, TABLE_NAME, c.COLUMN_ID";
+                return this.executeAndExtract(sql, CachingDatabaseMetaData.this.database);
+            }
 
             protected List<CachedRow> mssqlQuery(boolean bulk) throws DatabaseException, SQLException {
                 CatalogAndSchema catalogAndSchema = new CatalogAndSchema(catalogName, schemaName).customize(database);
@@ -1204,7 +1246,7 @@ public class JdbcDatabaseSnapshot extends DatabaseSnapshot {
                         return queryMssql(catalogAndSchema, table);
                     } else if (database instanceof Db2zDatabase) {
                         return queryDb2Zos(catalogAndSchema, table);
-                    } else if (database instanceof PostgresDatabase) {
+                    } else if (database instanceof PostgresDatabase || database instanceof KingBase8Database) {
                         return queryPostgres(catalogAndSchema, table);
                     }
 
@@ -1326,6 +1368,14 @@ public class JdbcDatabaseSnapshot extends DatabaseSnapshot {
             });
         }
 
+        /**
+         * 增加达梦适配
+         * @param catalogName
+         * @param schemaName
+         * @param viewName
+         * @return
+         * @throws DatabaseException
+         */
         public List<CachedRow> getViews(final String catalogName, final String schemaName, String viewName) throws DatabaseException {
             final String view;
             if (database instanceof DB2Database) {
@@ -1366,7 +1416,9 @@ public class JdbcDatabaseSnapshot extends DatabaseSnapshot {
                 public List<CachedRow> fastFetchQuery() throws SQLException, DatabaseException {
                     CatalogAndSchema catalogAndSchema = new CatalogAndSchema(catalogName, schemaName).customize(database);
 
-                    if (database instanceof OracleDatabase) {
+                    if (database instanceof DmDatabase) {
+                        return this.queryDameng(catalogAndSchema, view);
+                    }else if (database instanceof OracleDatabase) {
                         return queryOracle(catalogAndSchema, view);
                     } else if (database instanceof MSSQLDatabase) {
                         return queryMssql(catalogAndSchema, view);
@@ -1381,8 +1433,9 @@ public class JdbcDatabaseSnapshot extends DatabaseSnapshot {
                 @Override
                 public List<CachedRow> bulkFetchQuery() throws SQLException, DatabaseException {
                     CatalogAndSchema catalogAndSchema = new CatalogAndSchema(catalogName, schemaName).customize(database);
-
-                    if (database instanceof OracleDatabase) {
+                    if (database instanceof DmDatabase) {
+                        return this.queryDameng(catalogAndSchema, null);
+                    } else if (database instanceof OracleDatabase) {
                         return queryOracle(catalogAndSchema, null);
                     } else if (database instanceof MSSQLDatabase) {
                         return queryMssql(catalogAndSchema, null);
@@ -1449,6 +1502,35 @@ public class JdbcDatabaseSnapshot extends DatabaseSnapshot {
                     sql += " AND a.VIEW_NAME not in (select mv.name from all_registered_mviews mv where mv.owner=a.owner)";
 
                     return executeAndExtract(sql, database);
+                }
+
+                /**
+                 * 达梦额外适配查询结构方法，用于替换达梦jdbc的 斜杠转义问题
+                 * @param catalogAndSchema
+                 * @param viewName
+                 * @return
+                 * @throws DatabaseException
+                 * @throws SQLException
+                 */
+                private List<CachedRow> queryDameng(CatalogAndSchema catalogAndSchema, String viewName) throws DatabaseException, SQLException {
+                    String ownerName = CachingDatabaseMetaData.this.database.correctObjectName(catalogAndSchema.getCatalogName(), Schema.class);
+                    String sql = "SELECT null as TABLE_CAT, a.OWNER as TABLE_SCHEM, a.VIEW_NAME as TABLE_NAME, 'TABLE' as TABLE_TYPE, c.COMMENTS as REMARKS, TEXT as OBJECT_BODY";
+                    if (CachingDatabaseMetaData.this.database.getDatabaseMajorVersion() > 10) {
+                        sql = sql + ", EDITIONING_VIEW";
+                    }
+
+                    sql = sql + " from ALL_VIEWS a join ALL_TAB_COMMENTS c on a.VIEW_NAME=c.table_name and a.owner=c.owner ";
+                    if (viewName == null && JdbcDatabaseSnapshot.this.getAllCatalogsStringScratchData() != null) {
+                        sql = sql + "WHERE a.OWNER IN ('" + ownerName + "', " + JdbcDatabaseSnapshot.this.getAllCatalogsStringScratchData() + ")";
+                    } else {
+                        sql = sql + "WHERE a.OWNER='" + ownerName + "'";
+                    }
+
+                    if (viewName != null) {
+                        sql = sql + " AND a.VIEW_NAME='" + CachingDatabaseMetaData.this.database.correctObjectName(viewName, View.class) + "'";
+                    }
+
+                    return this.executeAndExtract(sql, CachingDatabaseMetaData.this.database);
                 }
             });
         }

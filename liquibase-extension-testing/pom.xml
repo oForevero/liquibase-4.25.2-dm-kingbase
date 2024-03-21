@@ -5,12 +5,12 @@
     <parent>
         <groupId>org.liquibase</groupId>
         <artifactId>liquibase</artifactId>
-        <version>0-SNAPSHOT</version>
+        <version>4.25.2</version>
     </parent>
 
     <artifactId>liquibase-extension-testing</artifactId>
     <packaging>jar</packaging>
-    
+
     <properties>
         <maven.deploy.skip>false</maven.deploy.skip>
         <sonar.coverage.jacoco.xmlReportPaths>../target/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>

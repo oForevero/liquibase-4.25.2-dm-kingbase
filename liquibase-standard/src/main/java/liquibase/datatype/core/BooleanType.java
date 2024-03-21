@@ -59,19 +59,23 @@ public class BooleanType extends LiquibaseDataType {
                 return new DatabaseDataType("SMALLINT");
             }
         } else if (database instanceof DB2Database) {
-			if (((DB2Database) database).supportsBooleanDataType())
-				return new DatabaseDataType("BOOLEAN");
-			else
-				return new DatabaseDataType("SMALLINT");
+            if (((DB2Database) database).supportsBooleanDataType())
+                return new DatabaseDataType("BOOLEAN");
+            else
+                return new DatabaseDataType("SMALLINT");
         } else if (database instanceof HsqlDatabase) {
             return new DatabaseDataType("BOOLEAN");
-        } else if (database instanceof PostgresDatabase) {
+        } else if (database instanceof PostgresDatabase || database instanceof KingBase8Database) {
             if (originalDefinition.toLowerCase(Locale.US).startsWith("bit")) {
                 return new DatabaseDataType("BIT", getParameters());
             }
         } else if (database instanceof H2Database && getParameters().length > 0) {
-          return new DatabaseDataType("BOOLEAN");
-      }
+            return new DatabaseDataType("BOOLEAN");
+        }//达梦和人大金仓转int
+        else if(database instanceof DmDatabase) {
+            return new DatabaseDataType("bit");
+        }
+
 
 
         return super.toDatabaseDataType(database);
@@ -91,12 +95,12 @@ public class BooleanType extends LiquibaseDataType {
             } else if ("false".equals(((String) value).toLowerCase(Locale.US)) || "0".equals(value) || "b'0'".equals(
                     ((String) value).toLowerCase(Locale.US)) || "f".equals(((String) value).toLowerCase(Locale.US)) || ((String) value).toLowerCase(Locale.US).equals(this.getFalseBooleanValue(database).toLowerCase(Locale.US))) {
                 returnValue = this.getFalseBooleanValue(database);
-            } else if (database instanceof PostgresDatabase && Pattern.matches("b?([01])\\1*(::bit|::\"bit\")?", (String) value)) {
-                returnValue = "b'" 
+            } else if ((database instanceof PostgresDatabase || database instanceof KingBase8Database) && Pattern.matches("b?([01])\\1*(::bit|::\"bit\")?", (String) value)) {
+                returnValue = "b'"
                         + value.toString()
-                                .replace("b", "")
-                                .replace("\"", "")
-                                .replace("::it", "")
+                        .replace("b", "")
+                        .replace("\"", "")
+                        .replace("::it", "")
                         + "'::\"bit\"";
             } else if (database instanceof SybaseASADatabase && ((String) value).startsWith("COMPUTE")) {
                 returnValue = (String) value;
@@ -144,12 +148,12 @@ public class BooleanType extends LiquibaseDataType {
         if (database instanceof DerbyDatabase) {
             return !((DerbyDatabase) database).supportsBooleanDataType();
         } else if (database instanceof DB2Database) {
-			return !((DB2Database) database).supportsBooleanDataType();
-    	}
+            return !((DB2Database) database).supportsBooleanDataType();
+        }
         return (database instanceof Db2zDatabase) || (database instanceof FirebirdDatabase) || (database instanceof
-            MSSQLDatabase) || (database instanceof MySQLDatabase) || (database instanceof OracleDatabase) ||
-            (database instanceof SQLiteDatabase) || (database instanceof SybaseASADatabase) || (database instanceof
-            SybaseDatabase);
+                MSSQLDatabase) || (database instanceof MySQLDatabase) || (database instanceof OracleDatabase) ||
+                (database instanceof SQLiteDatabase) || (database instanceof SybaseASADatabase) || (database instanceof
+                SybaseDatabase) || (database instanceof DmDatabase);
     }
 
     /**
@@ -158,6 +162,9 @@ public class BooleanType extends LiquibaseDataType {
     public String getFalseBooleanValue(Database database) {
         if (isNumericBoolean(database)) {
             return "0";
+        }
+        if (database instanceof KingBase8Database) {
+            return "'0'";
         }
         if (database instanceof InformixDatabase) {
             return "'f'";
@@ -171,6 +178,9 @@ public class BooleanType extends LiquibaseDataType {
     public String getTrueBooleanValue(Database database) {
         if (isNumericBoolean(database)) {
             return "1";
+        }
+        if (database instanceof KingBase8Database) {
+            return "'1'";
         }
         if (database instanceof InformixDatabase) {
             return "'t'";

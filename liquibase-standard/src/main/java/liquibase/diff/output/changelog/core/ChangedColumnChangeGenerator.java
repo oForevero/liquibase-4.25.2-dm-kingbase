@@ -84,7 +84,7 @@ public class ChangedColumnChangeGenerator extends AbstractChangeGenerator implem
 
             LiquibaseDataType columnDataType = DataTypeFactory.getInstance().from(column.getType(), comparisonDatabase);
             if (columnDataType != null) {
-            change.setColumnDataType(columnDataType.toString());
+                change.setColumnDataType(columnDataType.toString());
             }
 
             changes.add(change);
@@ -298,6 +298,10 @@ public class ChangedColumnChangeGenerator extends AbstractChangeGenerator implem
     private boolean shouldTriggerAddDefaultChange(Column column, Difference difference, Database comparisonDatabase) {
         if (!(comparisonDatabase instanceof PostgresDatabase)) {
             return true;
+        }
+        //
+        if (column.getAutoIncrementInformation() != null && difference.getReferenceValue() instanceof DatabaseFunction) {
+            return false;
         }
         return column.getAutoIncrementInformation() == null || !(difference.getReferenceValue() instanceof DatabaseFunction);
     }

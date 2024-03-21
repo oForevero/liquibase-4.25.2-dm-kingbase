@@ -2,16 +2,7 @@ package liquibase.sqlgenerator.core;
 
 import liquibase.Scope;
 import liquibase.database.Database;
-import liquibase.database.core.AbstractDb2Database;
-import liquibase.database.core.Db2zDatabase;
-import liquibase.database.core.InformixDatabase;
-import liquibase.database.core.MSSQLDatabase;
-import liquibase.database.core.MySQLDatabase;
-import liquibase.database.core.OracleDatabase;
-import liquibase.database.core.PostgresDatabase;
-import liquibase.database.core.SQLiteDatabase;
-import liquibase.database.core.SybaseASADatabase;
-import liquibase.database.core.SybaseDatabase;
+import liquibase.database.core.*;
 import liquibase.datatype.DatabaseDataType;
 import liquibase.exception.DatabaseException;
 import liquibase.exception.ValidationErrors;
@@ -193,7 +184,12 @@ public class CreateTableGenerator extends AbstractSqlGenerator<CreateTableStatem
                             mysqlTableOptionStartWith = autoIncrementConstraint.getStartWith();
                         }
                     }
-                } else {
+                }
+                //支持达梦自增列
+                else if(isAutoIncrementColumn && database instanceof DmDatabase){
+                    buffer.append(" identity(1,1)");
+                }
+                else {
                     Scope.getCurrentScope().getLog(getClass()).warning(database.getShortName() + " does not support autoincrement columns as requested for " + (database.escapeTableName(statement.getCatalogName(), statement.getSchemaName(), statement.getTableName())));
                 }
             }
