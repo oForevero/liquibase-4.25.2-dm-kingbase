@@ -83,7 +83,7 @@ public class DmDatabase extends AbstractJdbcDatabase {
 
     @Override
     public int getPriority() {
-        return PRIORITY_DEFAULT;
+        return 6;
     }
 
     private void tryProxySession(final String url, final Connection con) {

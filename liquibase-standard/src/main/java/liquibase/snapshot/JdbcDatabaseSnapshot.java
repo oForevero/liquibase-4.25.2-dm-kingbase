@@ -1259,8 +1259,10 @@ public class JdbcDatabaseSnapshot extends DatabaseSnapshot {
                 @Override
                 public List<CachedRow> bulkFetchQuery() throws SQLException, DatabaseException {
                     CatalogAndSchema catalogAndSchema = new CatalogAndSchema(catalogName, schemaName).customize(database);
-
-                    if (database instanceof OracleDatabase) {
+                    //适配查询新增 达梦问题
+                    if (database instanceof DmDatabase){
+                        return queryDameng(catalogAndSchema, null);
+                    }else if (database instanceof OracleDatabase) {
                         return queryOracle(catalogAndSchema, null);
                     } else if (database instanceof MSSQLDatabase) {
                         return queryMssql(catalogAndSchema, null);
@@ -1322,6 +1324,38 @@ public class JdbcDatabaseSnapshot extends DatabaseSnapshot {
                             "from ALL_TABLES a " +
                             "join ALL_TAB_COMMENTS c on a.TABLE_NAME=c.table_name and a.owner=c.owner " +
                             "left outer join ALL_QUEUE_TABLES q ON a.TABLE_NAME = q.QUEUE_TABLE and a.OWNER = q.OWNER " +
+                            "WHERE q.QUEUE_TABLE is null ";
+                    String allCatalogsString = getAllCatalogsStringScratchData();
+                    if (tableName != null || allCatalogsString == null) {
+                        sql += "AND a.OWNER='" + ownerName + "'";
+                    } else {
+                        sql += "AND a.OWNER IN ('" + ownerName + "', " + allCatalogsString + ")";
+                    }
+                    if (tableName != null) {
+                        sql += " AND a.TABLE_NAME='" + tableName + "'";
+                    }
+
+                    return executeAndExtract(sql, database);
+                }
+
+                /**
+                 * 达梦请求方法
+                 * @param catalogAndSchema
+                 * @param tableName
+                 * @return
+                 * @throws DatabaseException
+                 * @throws SQLException
+                 */
+                private List<CachedRow> queryDameng(CatalogAndSchema catalogAndSchema, String tableName) throws DatabaseException, SQLException {
+                    String ownerName = database.correctObjectName(catalogAndSchema.getCatalogName(), Schema.class);
+
+                    String sql = "SELECT null as TABLE_CAT, a.OWNER as TABLE_SCHEM, a.TABLE_NAME as TABLE_NAME, " +
+                            "a.TEMPORARY as TEMPORARY, a.DURATION as DURATION, 'TABLE' as TABLE_TYPE, " +
+                            "c.COMMENTS as REMARKS, A.tablespace_name as tablespace_name, CASE WHEN A.tablespace_name = " +
+                            "(SELECT DEFAULT_TABLESPACE FROM USER_USERS) THEN 'true' ELSE null END as default_tablespace " +
+                            "from ALL_TABLES a " +
+                            "join ALL_TAB_COMMENTS c on a.TABLE_NAME=c.table_name and a.owner=c.owner " +
+                            // "left outer join ALL_QUEUE_TABLES q ON a.TABLE_NAME = q.QUEUE_TABLE and a.OWNER = q.OWNER " +
                             "WHERE q.QUEUE_TABLE is null ";
                     String allCatalogsString = getAllCatalogsStringScratchData();
                     if (tableName != null || allCatalogsString == null) {
