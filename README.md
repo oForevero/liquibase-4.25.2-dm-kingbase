@@ -12,3 +12,10 @@ https://github.com/liquibase/liquibase/tree/v4.25.1
 ### Activiti适配
 activiti需要修改activiti-engine
 https://github.com/oForevero/Activiti-support-kingbase-dm
+### 修改思路（剖析源码后的想法）
+首先，对于liquibase的适配需要实现对于 AbstractJdbcDatabase 的继承类，由于国产化数据库达梦适配与oracle，则直接复制oracle类，而kingbase适配与postgre，故复制postgre类
+然后，修改对应的数据库名和数据库jdbc，端口等配置即可。
+
+
+其次，对于达梦数据库的查询连接和kingbase的部分初始化sql不能使用oracle和postgre（部分表/视图不存在问题），如oracle存在 ALL_QUEUE_TABLES 视图 但是达梦不存在，则需要额外
+修改对应sql映射类 AbstractJdbcDatabase，对对应不适配造成的sql查询进行修复，并对自己改写的dmDatabse类和kingbaseDatabase类进行对应配置
