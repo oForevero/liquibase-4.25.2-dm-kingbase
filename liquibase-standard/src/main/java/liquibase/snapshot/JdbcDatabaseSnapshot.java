@@ -681,7 +681,7 @@ public class JdbcDatabaseSnapshot extends DatabaseSnapshot {
                     }
                 }
 
-                sql = sql + " AND " + ((OracleDatabase)CachingDatabaseMetaData.this.database).getSystemTableWhereClause("TABLE_NAME");
+                sql = sql + " AND " + ((DmDatabase)CachingDatabaseMetaData.this.database).getSystemTableWhereClause("TABLE_NAME");
                 sql = sql + " ORDER BY OWNER, TABLE_NAME, c.COLUMN_ID";
                 return this.executeAndExtract(sql, CachingDatabaseMetaData.this.database);
             }
@@ -1239,7 +1239,9 @@ public class JdbcDatabaseSnapshot extends DatabaseSnapshot {
                 @Override
                 public List<CachedRow> fastFetchQuery() throws SQLException, DatabaseException {
                     CatalogAndSchema catalogAndSchema = new CatalogAndSchema(catalogName, schemaName).customize(database);
-
+                    if (database instanceof DmDatabase){
+                        return queryDameng(catalogAndSchema, table);
+                    }
                     if (database instanceof OracleDatabase) {
                         return queryOracle(catalogAndSchema, table);
                     } else if (database instanceof MSSQLDatabase) {
@@ -1354,9 +1356,9 @@ public class JdbcDatabaseSnapshot extends DatabaseSnapshot {
                             "c.COMMENTS as REMARKS, A.tablespace_name as tablespace_name, CASE WHEN A.tablespace_name = " +
                             "(SELECT DEFAULT_TABLESPACE FROM USER_USERS) THEN 'true' ELSE null END as default_tablespace " +
                             "from ALL_TABLES a " +
-                            "join ALL_TAB_COMMENTS c on a.TABLE_NAME=c.table_name and a.owner=c.owner " +
+                            "join ALL_TAB_COMMENTS c on a.TABLE_NAME=c.table_name and a.owner=c.owner ";// +
                             // "left outer join ALL_QUEUE_TABLES q ON a.TABLE_NAME = q.QUEUE_TABLE and a.OWNER = q.OWNER " +
-                            "WHERE q.QUEUE_TABLE is null ";
+                            //"WHERE q.QUEUE_TABLE is null ";
                     String allCatalogsString = getAllCatalogsStringScratchData();
                     if (tableName != null || allCatalogsString == null) {
                         sql += "AND a.OWNER='" + ownerName + "'";

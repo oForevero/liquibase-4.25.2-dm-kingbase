@@ -261,7 +261,7 @@ public class ColumnSnapshotGenerator extends JdbcSnapshotGenerator {
         if (columnMetadataResultSet.get("IS_ROWGUIDCOL") != null && (Boolean) columnMetadataResultSet.get("IS_ROWGUIDCOL")) {
             column.setAttribute("rowGuid", true);
         }
-        if (database instanceof OracleDatabase) {
+        if (database instanceof OracleDatabase || database instanceof DmDatabase) {
             String nullable = columnMetadataResultSet.getString("NULLABLE");
             if ("Y".equals(nullable)) {
                 column.setNullable(true);
@@ -317,7 +317,7 @@ public class ColumnSnapshotGenerator extends JdbcSnapshotGenerator {
      */
     protected DataType readDataType(CachedRow columnMetadataResultSet, Column column, Database database) throws DatabaseException {
 
-        if (database instanceof OracleDatabase) {
+        if (database instanceof OracleDatabase || database instanceof DmDatabase) {
             String dataType = columnMetadataResultSet.getString("DATA_TYPE_NAME");
             dataType = dataType.replace("VARCHAR2", "VARCHAR");
             dataType = dataType.replace("NVARCHAR2", "NVARCHAR");
