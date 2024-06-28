@@ -15,6 +15,7 @@ import liquibase.statement.core.GetViewDefinitionStatement;
  * @Date 2024/3/20 16:18
  * @Created by JMY
  */
+
 public class GetViewDefinitionGeneratorKingBase8 extends GetViewDefinitionGenerator {
     @Override
     public int getPriority() {

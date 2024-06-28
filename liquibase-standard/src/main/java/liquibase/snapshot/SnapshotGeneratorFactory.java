@@ -6,6 +6,7 @@ import liquibase.database.Database;
 import liquibase.database.DatabaseConnection;
 import liquibase.database.ObjectQuotingStrategy;
 import liquibase.database.OfflineConnection;
+import liquibase.database.core.KingBase8Database;
 import liquibase.database.core.PostgresDatabase;
 import liquibase.diff.compare.DatabaseObjectComparatorFactory;
 import liquibase.exception.DatabaseException;
@@ -115,7 +116,7 @@ public class SnapshotGeneratorFactory {
                                         database.getLiquibaseSchemaName(), example.getName(), Table.class)));
                 return true;
             } catch (DatabaseException e) {
-                if (database instanceof PostgresDatabase) { // throws "current transaction is aborted" unless we roll back the connection
+                if (database instanceof PostgresDatabase || database instanceof KingBase8Database) { // throws "current transaction is aborted" unless we roll back the connection
                     database.rollback();
                 }
                 return false;
