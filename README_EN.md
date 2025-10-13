@@ -1,8 +1,10 @@
+# Liquibase [![Build and Test](https://github.com/liquibase/liquibase/actions/workflows/build.yml/badge.svg)](https://github.com/liquibase/liquibase/actions/workflows/build.yml) [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=liquibase&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=liquibase)
+<p align="center"><img src="https://github.com/liquibase/liquibase/blob/master/Liquibase.png" width="30%" height="30%"></p>
+
 ## language
 English | [简体中文](./README.mdd)
-## 
-Modifications to support domestically produced personal projects
-Recently, I've needed to use the Liquibase project for work, so I'm researching and implementing this feature. Currently, we're only working on adapting and developing support for the Renmin University of China Jincang and DAMO databases.
+## Modifications to support domestically produced personal projects
+Recently, I've needed to use the Liquibase project for work, so I'm researching and implementing this feature. Currently, we're only working on adapting and developing support for the Kingbase and Dameng databases.
 
 ### Versions Used
 Pull the official version 4.25.2. Directly forking it will result in a large number of official workflows being added to this project, so I uploaded it myself: https://github.com/liquibase/liquibase/tree/v4.25.2
