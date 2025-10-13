@@ -2,7 +2,7 @@
 <p align="center"><img src="https://github.com/liquibase/liquibase/blob/master/Liquibase.png" width="30%" height="30%"></p>
 
 ## language
-English | [简体中文](./README.mdd)
+English | [简体中文](./README.md)
 ## Modifications to support domestically produced personal projects
 Recently, I've needed to use the Liquibase project for work, so I'm researching and implementing this feature. Currently, we're only working on adapting and developing support for the Kingbase and Dameng databases.
 
