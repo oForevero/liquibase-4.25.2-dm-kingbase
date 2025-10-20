@@ -10,7 +10,7 @@
 拉取官方4.25.2版本，直接fork会导致官方存在一大堆workflow到本项目，故自己上传
 https://github.com/liquibase/liquibase/tree/v4.25.2
 ### 已适配数据库：
-- 达梦适配（已实现功能，初步测试增删改查无误）
+- 达梦适配（已实现功能，初步测试无误）
 - 人大金仓适配（已实现功能，初步测试无问题）
 ### Activiti适配
 activiti需要修改activiti-engine
