@@ -215,7 +215,14 @@ public class DmDatabase extends AbstractJdbcDatabase {
     @Override
     public int getDatabaseMajorVersion() throws DatabaseException {
         if (databaseMajorVersion == null) {
-            return super.getDatabaseMajorVersion();
+            try {
+                return super.getDatabaseMajorVersion();
+            } catch (NumberFormatException e) {
+                // 达梦数据库可能返回空的 major version，此时返回默认版本 8
+                Scope.getCurrentScope().getLog(getClass()).warning(
+                        "Could not parse database major version, defaulting to 8: " + e.getMessage());
+                return 8; // 达梦数据库常见版本
+            }
         } else {
             return databaseMajorVersion;
         }
@@ -224,7 +231,14 @@ public class DmDatabase extends AbstractJdbcDatabase {
     @Override
     public int getDatabaseMinorVersion() throws DatabaseException {
         if (databaseMinorVersion == null) {
-            return super.getDatabaseMinorVersion();
+            try {
+                return super.getDatabaseMinorVersion();
+            } catch (NumberFormatException e) {
+                // 达梦数据库可能返回空的 minor version，此时返回 0
+                Scope.getCurrentScope().getLog(getClass()).warning(
+                        "Could not parse database minor version, defaulting to 0: " + e.getMessage());
+                return 0;
+            }
         } else {
             return databaseMinorVersion;
         }
