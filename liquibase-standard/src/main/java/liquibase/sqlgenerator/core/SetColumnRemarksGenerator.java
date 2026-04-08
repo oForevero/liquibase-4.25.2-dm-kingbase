@@ -14,6 +14,8 @@ import liquibase.structure.core.Table;
 import liquibase.util.ColumnParentType;
 import liquibase.util.StringUtil;
 
+import java.util.Arrays;
+
 public class SetColumnRemarksGenerator extends AbstractSqlGenerator<SetColumnRemarksStatement> {
     @Override
     public int getPriority() {
@@ -22,7 +24,7 @@ public class SetColumnRemarksGenerator extends AbstractSqlGenerator<SetColumnRem
 
     @Override
     public boolean supports(SetColumnRemarksStatement statement, Database database) {
-        return (database instanceof OracleDatabase) || (database instanceof PostgresDatabase) || (database instanceof
+        return (database instanceof OracleDatabase) || (database instanceof DmDatabase) || (database instanceof PostgresDatabase) || (database instanceof
                 AbstractDb2Database) || (database instanceof MSSQLDatabase) || (database instanceof H2Database) || (database
                 instanceof SybaseASADatabase) || (database instanceof MySQLDatabase);
     }
@@ -108,9 +110,11 @@ public class SetColumnRemarksGenerator extends AbstractSqlGenerator<SetColumnRem
                     " END")};
             return generatedSql;
         } else {
-            return new Sql[]{new UnparsedSql("COMMENT ON COLUMN " + database.escapeTableName(statement.getCatalogName(), statement.getSchemaName(), statement.getTableName())
+            Sql[] sqls = new Sql[]{new UnparsedSql("COMMENT ON COLUMN " + database.escapeTableName(statement.getCatalogName(), statement.getSchemaName(), statement.getTableName())
                     + "." + database.escapeColumnName(statement.getCatalogName(), statement.getSchemaName(), statement.getTableName(), statement.getColumnName()) + " IS '"
                     + remarksEscaped + "'", getAffectedColumn(statement))};
+            System.out.println("Generated SQL: " + Arrays.toString(sqls));
+            return sqls;
         }
     }
 

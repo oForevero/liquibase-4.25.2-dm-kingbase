@@ -20,7 +20,6 @@ import liquibase.util.StringUtil;
 
 import java.sql.*;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class JdbcDatabaseSnapshot extends DatabaseSnapshot {
 
@@ -660,7 +659,7 @@ public class JdbcDatabaseSnapshot extends DatabaseSnapshot {
                     sql = sql + ", DEFAULT_ON_NULL, IDENTITY_COLUMN, ic.GENERATION_TYPE ";
                 }
 
-                sql = sql + "FROM ALL_TAB_COLS c JOIN ALL_COL_COMMENTS cc USING ( OWNER, TABLE_NAME, COLUMN_NAME ) ";
+                sql = sql + "FROM ALL_TAB_COLS c LEFT JOIN ALL_COL_COMMENTS cc ON (c.OWNER = cc.OWNER AND c.TABLE_NAME = cc.TABLE_NAME AND c.COLUMN_NAME = cc.COLUMN_NAME) ";
                 if (collectIdentityData) {
                     sql = sql + "LEFT JOIN ALL_TAB_IDENTITY_COLS ic USING (OWNER, TABLE_NAME, COLUMN_NAME ) ";
                 }
